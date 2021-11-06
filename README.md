@@ -18,6 +18,7 @@ This project can detect come common stylistic issues like wrong indentation, tra
 * ### S009 - Function name function_name should be written in snake_case
 ## Input and output format
 Program can analyze file or files within giver directory. For starting, need one parameter - path to file or directory:
+
 `#python code_analyzer.py directory-or-file`
 
 Output format looks like this:
