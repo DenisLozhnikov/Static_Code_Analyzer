@@ -1,6 +1,6 @@
 # Static Code Analyzer for Python
 ## General info
-This project can detect some common stylistic issues like wrong indentation, trailing semicolons, wrong class or def name etc. Graduate project for [JetBrains Academy](https://hyperskill.org)
+This project can detect some common stylistic issues like incorrect indentation, trailing semicolons, incorrect class or def name etc. Graduate project for [JetBrains Academy](https://hyperskill.org)
 ## Recognizable stylistic issues
 * ### S001 - Too long line
     Line with 80 and more characters
@@ -16,13 +16,17 @@ This project can detect some common stylistic issues like wrong indentation, tra
 * ### S007 - Too many spaces after construction_name (def or class)
 * ### S008 - Class name class_name should be written in CamelCase
 * ### S009 - Function name function_name should be written in snake_case
+* ### S010 - Argument name arg_name should be written in snake_case
+* ### S011 - Variable var_name should be written in snake_case
+  Only in functions. The error message for an invalid variable name should be output only when this variable is assigned a value.
+* ### S012 - The default argument value is mutable
 ## Input and output format
-Program can analyze file or files within giver directory. For starting, need one parameter - path to file or directory:
+Program can analyze file or files within giver directory. To run the analyzer, you need to supply a directory path or a path to the file:
 `#python code_analyzer.py directory-or-file`
 
 Output format looks like this:
 `Path: Line: Code Message`
 
 ## Test cases
-To analyze test python files you can run this as follows:
+To launch tests, run the command::
 `python code_analyzer.py test_dir`
