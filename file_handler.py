@@ -15,4 +15,4 @@ class FileHandler:
         if os.path.isfile(self.path):
             return [self.path]
         os.chdir(self.path)
-        return glob.glob("**/*." + extension, recursive=True)
+        return [self.path + '\\' + file for file in glob.glob("**/*." + extension, recursive=True)]

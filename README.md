@@ -1,6 +1,6 @@
 # Static Code Analyzer for Python
 ## General info
-This project can detect come common stylistic issues like wrong indentation, trailing semicolons, wrong class or def name etc. Graduate project for [JetBrains Academy](https://hyperskill.org)
+This project can detect some common stylistic issues like wrong indentation, trailing semicolons, wrong class or def name etc. Graduate project for [JetBrains Academy](https://hyperskill.org)
 ## Recognizable stylistic issues
 * ### S001 - Too long line
     Line with 80 and more characters
