@@ -1,18 +1,9 @@
 from file_handler import FileHandler
 import sys
 import re
-
-STYLE_MESSAGES = {"S001": "More than 79 symbols",
-                  "S002": "Indentation is not a multiple of four",
-                  "S003": "Unnecessary semicolon after a statement",
-                  "S004": "Less than two spaces before inline comments",
-                  "S005": "TODO found",
-                  "S006": "More than two blank lines preceding a code line",
-                  "S007": "Too mane spaces after '-'",
-                  "S008": "Class name '-' should be written in CamelCase",
-                  "S009": "Function name '-' should be written in snake_case"}
-
-NAMED_MESSAGES = ["S007", "S008", "S009"]
+import ast
+from ast_parsing import AstParser
+from messages import STYLE_MESSAGES, NAMED_MESSAGES
 
 
 def get_name(line):
@@ -21,7 +12,7 @@ def get_name(line):
     :param line: string, one line of code
     :return: Class or function name
     """
-    return re.search(r"(def|class) (\w+).*$", line).group(2)
+    return re.search(r"(def|class) +(\w+).*$", line).group(2)
 
 
 def get_construction_name(line):
@@ -33,7 +24,7 @@ def get_construction_name(line):
     return re.search(r"(def|class)", line).group(1)
 
 
-class Analyzer:
+class Analyzer():
     def __init__(self, file_handler):
         """
         Parsers directory for py files if given
@@ -45,8 +36,7 @@ class Analyzer:
 
     def analyze_all(self):
         """
-        Analyzes all files in directory or file
-        :param verbose: print result with message if true
+        Analyzes single file or all files in directory
         :return: formatted dic {Path: {Line: Code}}
         """
         issues = {}
@@ -56,7 +46,7 @@ class Analyzer:
             for pos, value in issues[file].items():  # {pos = line_number: value = [issues_list]}
                 for error in value:  # issues in line №(pos)
                     if error in NAMED_MESSAGES:
-                        message = STYLE_MESSAGES[error].replace("-", self.name_issues[pos-1][error])
+                        message = STYLE_MESSAGES[error].replace("-", self.name_issues[pos][error])
                     else:
                         message = STYLE_MESSAGES[error]
                     print(f"{file}: Line {pos}: {error} {message}")
@@ -65,7 +55,7 @@ class Analyzer:
         """
         checks specified file
         :param path: path to py file to check
-        :return: dic {Line: Code}
+        :return: dic {Line: [Codes]}
         """
         pyfile = open(path)
         file_errors = {}
@@ -77,12 +67,36 @@ class Analyzer:
                 blank_counter += 1
                 blank_issue = True if blank_counter > 2 else False
                 continue
-            file_errors.update(self.get_line_issues(num, line, blanks=blank_issue))
+            file_errors.update(self.get_line_issues(num+1, line, blanks=blank_issue))
 
             blank_counter = 0
             blank_issue = False
         pyfile.close()
+        ast_errors = self.perform_ast_checks(path)
+        for line_error in ast_errors:
+            if line_error in file_errors:
+                file_errors[line_error].extend(ast_errors[line_error])
+            else:
+                file_errors[line_error] = ast_errors[line_error]
         return file_errors
+
+    def perform_ast_checks(self, path):
+        """
+        Performs checks with ast module
+        :param path: path to file
+        :return: {Line: [Codes]}
+        """
+        with open(path) as file:
+            tree = ast.parse(file.read())
+            ast_parser = AstParser()
+            ast_parser.visit(tree)
+            for line_name in ast_parser.name_errors:
+                if line_name in self.name_issues:
+                    self.name_issues[line_name].update(ast_parser.name_errors[line_name])
+                else:
+                    self.name_issues[line_name] = ast_parser.name_errors[line_name]
+        return ast_parser.errors
+
 
     def get_line_issues(self, num, line, blanks=False):
         """
@@ -101,7 +115,7 @@ class Analyzer:
         self.check_unnec_symbs(line)
         if blanks:
             self.errors.append("S006")
-        return {num + 1: sorted(self.errors)}
+        return {num: sorted(self.errors)}
 
     def get_naming_issues(self, num, line):
         """
@@ -110,18 +124,20 @@ class Analyzer:
         :param line: line text
         :return: True if found at least one issue
         """
+        self.name_issues[num] = {}
         s007 = self.check_spaces(line)
         if s007 is not None:
-            self.name_issues.update({num: {"S007": s007}})
+            self.name_issues[num]["S007"] = s007
 
         s008 = self.check_class_name(line)
         if s008 is not None:
-            self.name_issues.update({num: {"S008": s008}})
+            self.name_issues[num]["S008"] = s008
 
         s009 = self.check_def_name(line)
         if s009 is not None:
-            self.name_issues.update({num: {"S009": s009}})
+            self.name_issues[num]["S009"] = s009
         return self.name_issues is not None
+
 
     def check_len(self, line):  # S001
         if len(line) > 79:
